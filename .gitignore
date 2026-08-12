@@ -1,0 +1,19 @@
+# Security & Credentials
+.env
+*.json
+*.pem
+*.key
+
+# Data & Extraction Outputs
+*.csv
+*.csv#
+
+# Python environment & cache
+__pycache__/
+.venv/
+.pytest_cache/
+
+# Terraform local state
+.terraform/
+*.tfstate
+*.tfstate.backup
