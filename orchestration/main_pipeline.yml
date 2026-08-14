@@ -1,0 +1,78 @@
+id: kenya_agri_climate_pipeline
+namespace: dev.data_engineering
+
+inputs:
+  - id: start_date
+    type: STRING
+    required: false
+    description: "Format YYYY-MM-DD. Defaults to yesterday if triggered by schedule."
+  - id: end_date
+    type: STRING
+    required: false
+    description: "Format YYYY-MM-DD. Defaults to yesterday if triggered by schedule."
+
+variables:
+  gcp_project: "kestra-sandbox-504410"
+  gcs_bucket: "kenya-agri-climate-lake-bucket"
+  dynamic_start: "{{ inputs.start_date ? inputs.start_date : execution.startDate | dateAdd(-1, 'DAYS') | date('yyyy-MM-dd') }}"
+  dynamic_end: "{{ inputs.end_date ? inputs.end_date : execution.startDate | dateAdd(-1, 'DAYS') | date('yyyy-MM-dd') }}"
+
+tasks:
+  - id: workspace
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      # 1. Pull the latest code from your repository
+      - id: clone_repo
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/jude-craft/kenya-agri-climate-pipeline.git
+        branch: main
+
+      # 2. Run the Weather Python Script
+      - id: extract_weather_data
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.11-slim
+        env:
+          START_DATE: "{{ vars.dynamic_start }}"
+          END_DATE: "{{ vars.dynamic_end }}"
+        beforeCommands:
+          - pip install requests
+        commands:
+          - python extract/weather_extract.py
+        outputFiles:
+          - "producer_weather_extract.csv"
+
+      # 3. Run the Market Python Script
+      - id: extract_market_data
+        type: io.kestra.plugin.scripts.python.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.11-slim
+        beforeCommands:
+          - pip install requests
+        commands:
+          - python extract/market_extract.py
+        outputFiles:
+          - "consumer_market_extract.csv"
+
+  # 4. Upload Weather to Google Cloud Storage
+  - id: upload_weather_to_gcs
+    type: io.kestra.plugin.gcp.gcs.Upload
+    from: "{{ outputs.extract_weather_data.outputFiles['producer_weather_extract.csv'] }}"
+    to: "gs://{{ vars.gcs_bucket }}/raw_weather/producer_weather_{{ vars.dynamic_start }}_to_{{ vars.dynamic_end }}.csv"
+    serviceAccount: "{{ secret('GCP_CREDS') }}"
+    projectId: "{{ vars.gcp_project }}"
+
+  # 5. Upload Market to Google Cloud Storage
+  - id: upload_market_to_gcs
+    type: io.kestra.plugin.gcp.gcs.Upload
+    from: "{{ outputs.extract_market_data.outputFiles['consumer_market_extract.csv'] }}"
+    to: "gs://{{ vars.gcs_bucket }}/raw_market/consumer_market_{{ vars.dynamic_start }}_to_{{ vars.dynamic_end }}.csv"
+    serviceAccount: "{{ secret('GCP_CREDS') }}"
+    projectId: "{{ vars.gcp_project }}"
+
+triggers:
+  - id: daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * *" # Runs daily at 2:00 AM

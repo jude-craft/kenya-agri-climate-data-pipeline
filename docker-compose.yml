@@ -1,0 +1,52 @@
+volumes:
+  postgres-data:
+  kestra-data:
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: kestra-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+
+  kestra:
+    image: kestra/kestra:latest
+    container_name: kestra-server
+    user: "root"
+    command: server standalone
+    ports:
+      - "${KESTRA_HOST_PORT}:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - kestra-data:/app/storage
+      - ./credentials:/app/credentials:ro
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/gcp-service-account.json
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+            driverClassName: org.postgresql.Driver
+            username: ${POSTGRES_USER}
+            password: ${POSTGRES_PASSWORD}
+        kestra:
+          server:
+            basicAuth:
+              username: ${KESTRA_ADMIN_EMAIL}
+              password: ${KESTRA_ADMIN_PASSWORD}
+          repository:
+            type: postgres
+          queue:
+            type: postgres
+          storage:
+            type: local
+            local:
+              base-path: "/app/storage"
+    depends_on:
+      - postgresxc
