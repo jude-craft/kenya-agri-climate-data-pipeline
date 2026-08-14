@@ -49,4 +49,4 @@ services:
             local:
               base-path: "/app/storage"
     depends_on:
-      - postgresxc
+      - postgres
