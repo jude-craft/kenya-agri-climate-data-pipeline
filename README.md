@@ -1,4 +1,4 @@
-# 🌾 Kenya Agri-Market & Climate Impact Pipeline
+# Kenya Agri-Market & Climate Impact Pipeline
 
 > An end-to-end batch data engineering pipeline I built to analyze the relationship between climate variability and agricultural commodity prices across Kenya.
 
