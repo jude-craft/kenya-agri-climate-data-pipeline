@@ -63,6 +63,28 @@ tasks:
     serviceAccount: "{{ secret('GCP_CREDS') }}"
     projectId: "{{ vars.gcp_project }}"
 
+  - id: load_weather_to_bigquery
+    type: io.kestra.plugin.gcp.bigquery.Load
+    from: "gs://{{ vars.gcs_bucket }}/raw_weather/producer_weather_{{ vars.dynamic_start }}_to_{{ vars.dynamic_end }}.csv"
+    destinationTable: "{{ vars.gcp_project }}.kenya_agri_market.raw_weather"
+    format: CSV
+    csvOptions:
+      skipLeadingRows: 1
+    writeDisposition: WRITE_APPEND
+    serviceAccount: "{{ secret('GCP_CREDS') }}"
+    projectId: "{{ vars.gcp_project }}"
+
+  - id: load_market_to_bigquery
+    type: io.kestra.plugin.gcp.bigquery.Load
+    from: "gs://{{ vars.gcs_bucket }}/raw_market/consumer_market_{{ vars.dynamic_start }}_to_{{ vars.dynamic_end }}.csv"
+    destinationTable: "{{ vars.gcp_project }}.kenya_agri_market.raw_market"
+    format: CSV
+    csvOptions:
+      skipLeadingRows: 1
+    writeDisposition: WRITE_APPEND
+    serviceAccount: "{{ secret('GCP_CREDS') }}"
+    projectId: "{{ vars.gcp_project }}"
+
 triggers:
   - id: daily_schedule
     type: io.kestra.plugin.core.trigger.Schedule
