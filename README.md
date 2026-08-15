@@ -384,7 +384,7 @@ This sacrifices network isolation between the container and the host. In a produ
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/kenya-agri-climate-data-pipeline.git
+git clone https://github.com/jude-craft/kenya-agri-climate-data-pipeline.git
 cd kenya-agri-climate-data-pipeline
 ```
 
