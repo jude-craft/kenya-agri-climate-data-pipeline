@@ -12,7 +12,7 @@ def fetch_market_data():
     filename = "consumer_market_extract.csv"
     print("Initiating WFP Market Data extraction...\n" + "-"*40)
     
-    # programmatically download the csv data into memory 
+    # downloads the csv data into memory 
     print("Downloading dataset from HDX...")
     response = requests.get(WFP_CSV_URL)
     response.raise_for_status()
