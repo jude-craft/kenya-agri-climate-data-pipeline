@@ -18,45 +18,37 @@ variables:
   dynamic_end: "{{ inputs.end_date ? inputs.end_date : execution.startDate | dateAdd(-1, 'DAYS') | date('yyyy-MM-dd') }}"
 
 tasks:
-  - id: workspace
-    type: io.kestra.plugin.core.flow.WorkingDirectory
-    tasks:
-      # 1. Pull the latest code from your repository
-      - id: clone_repo
-        type: io.kestra.plugin.git.Clone
-        url: https://github.com/jude-craft/kenya-agri-climate-data-pipeline.git
-        branch: main
+  - id: extract_weather_data
+    type: io.kestra.plugin.scripts.python.Commands
+    namespaceFiles:
+      enabled: true
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: python:3.11-slim
+    env:
+      START_DATE: "{{ vars.dynamic_start }}"
+      END_DATE: "{{ vars.dynamic_end }}"
+    beforeCommands:
+      - pip install requests
+    commands:
+      - python weather_extract.py
+    outputFiles:
+      - "producer_weather_extract.csv"
 
-      # 2. Run the Weather Python Script
-      - id: extract_weather_data
-        type: io.kestra.plugin.scripts.python.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.11-slim
-        env:
-          START_DATE: "{{ vars.dynamic_start }}"
-          END_DATE: "{{ vars.dynamic_end }}"
-        beforeCommands:
-          - pip install requests
-        commands:
-          - python extract/weather_extract.py
-        outputFiles:
-          - "producer_weather_extract.csv"
+  - id: extract_market_data
+    type: io.kestra.plugin.scripts.python.Commands
+    namespaceFiles:
+      enabled: true
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: python:3.11-slim
+    beforeCommands:
+      - pip install requests
+    commands:
+      - python market_extract.py
+    outputFiles:
+      - "consumer_market_extract.csv"
 
-      # 3. Run the Market Python Script
-      - id: extract_market_data
-        type: io.kestra.plugin.scripts.python.Commands
-        taskRunner:
-          type: io.kestra.plugin.scripts.runner.docker.Docker
-        containerImage: python:3.11-slim
-        beforeCommands:
-          - pip install requests
-        commands:
-          - python extract/market_extract.py
-        outputFiles:
-          - "consumer_market_extract.csv"
-
-  # 4. Upload Weather to Google Cloud Storage
   - id: upload_weather_to_gcs
     type: io.kestra.plugin.gcp.gcs.Upload
     from: "{{ outputs.extract_weather_data.outputFiles['producer_weather_extract.csv'] }}"
@@ -64,7 +56,6 @@ tasks:
     serviceAccount: "{{ secret('GCP_CREDS') }}"
     projectId: "{{ vars.gcp_project }}"
 
-  # 5. Upload Market to Google Cloud Storage
   - id: upload_market_to_gcs
     type: io.kestra.plugin.gcp.gcs.Upload
     from: "{{ outputs.extract_market_data.outputFiles['consumer_market_extract.csv'] }}"
@@ -75,4 +66,4 @@ tasks:
 triggers:
   - id: daily_schedule
     type: io.kestra.plugin.core.trigger.Schedule
-    cron: "0 2 * * *" # Runs daily at 2:00 AM
+    cron: "0 2 * * *"
