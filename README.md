@@ -36,7 +36,7 @@
 
 ## Problem Statement
 
-Agriculture is the backbone of Kenya's economy — it employs over 70% of the rural population and directly influences the country's GDP, food security, and regional stability. Yet, it is one of the sectors most vulnerable to extreme climate events. A single prolonged drought in the Rift Valley can cascade into supply shortages in Nairobi markets within weeks, driving food inflation that hits the lowest-income households the hardest.
+Agriculture is the backbone of Kenya's economy — it employs over 70% of the rural population and directly influences the country's GDP(Gross Domestic Product), food security, and regional stability. Yet, it is one of the sectors most vulnerable to extreme climate events. A single prolonged drought in the Rift Valley can cascade into supply shortages in Nairobi markets within weeks, driving food inflation that hits the lowest-income households the hardest.
 
 Despite this, the relationship between **climate patterns** (rainfall, temperature, evapotranspiration) and **commodity price fluctuations** remains poorly quantified at scale. The data exists — scattered across weather APIs and humanitarian datasets — but no unified, analytics-ready pipeline connects these two domains for Kenya.
 
