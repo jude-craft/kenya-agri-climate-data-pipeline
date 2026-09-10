@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: bronze_layer
+    database: kestra-sandbox-504410
+    schema: kenya_agri_market
+    tables:
+      - name: raw_market
+        description: "20 years of historical Kenyan agricultural market prices"
+      - name: raw_weather
+        description: "Historical climate data for cross-analysis with market prices"
