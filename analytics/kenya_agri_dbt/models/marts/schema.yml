@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: fct_climate_market_impact
+    description: "Final analytical table combining market prices with rolling climate stress indicators."
+    columns:
+      - name: market_id
+        description: "Primary key for the fact table."
+        data_tests:
+          - unique
+          - not_null
+      - name: county
+        description: "The Kenyan county where the market is located."
+      - name: price_date
+        description: "The date the commodity price was recorded."
+      - name: price_kes
+        description: "Price in Kenyan Shillings."
+        data_tests:
+          - not_null
+      - name: temp_mean_c_7d_avg
+        description: "7-day rolling average temperature preceding the price date."

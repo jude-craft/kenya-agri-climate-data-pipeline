@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: int_weather_rolling
+    description: "Calculates rolling climate stress metrics (trailing sums and averages) partitioned by county."
+    columns:
+      - name: weather_id
+        description: "Primary key. Ensures our window functions did not duplicate daily county records."
+        data_tests:
+          - unique
+          - not_null
+      - name: county
+        data_tests:
+          - not_null
+      - name: temp_mean_c_7d_avg
+        description: "7-day rolling average temperature."
+      - name: rainfall_mm_30d_sum
+        description: "30-day cumulative rainfall. A core indicator of prolonged drought stress."
