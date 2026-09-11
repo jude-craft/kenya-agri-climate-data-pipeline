@@ -18,3 +18,12 @@ __pycache__/
 *.tfstate
 *.tfstate.backup
 *.terraform.lock.hcl
+
+target/
+dbt_packages/
+logs/
+.env
+src
+.python-version
+pyproject.toml
+uv.lock
