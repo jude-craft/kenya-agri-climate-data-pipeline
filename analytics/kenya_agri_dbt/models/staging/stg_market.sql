@@ -5,7 +5,7 @@ with source as (
 staged as (
     select 
         -- surrogate key
-        {{ dbt_utils.generate_surrogate_key(['date','market','commodity' ]) }} as market_id,
+        {{ dbt_utils.generate_surrogate_key(['date','county','market','commodity','unit']) }} as market_id,
 
         -- dimensions
         cast(date as date) as price_date,
@@ -19,6 +19,16 @@ staged as (
 
     from source
 
+),
+
+deduplicated as(
+    select * 
+    from staged 
+    -- BigQuery instance to only keep the first instance of duplicate market_id
+    qualify row_number() over (
+        partition by market_id
+        order by price_kes desc
+    ) = 1
 )
 
-select * from staged
+select * from deduplicated

@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: stg_market
+    description: "Cleaned and typed market price records across Kenyan commodities and markets."
+    columns:
+      - name: market_id
+        description: "Surrogate key generated from price_date, market, and commodity."
+        data_tests:
+          - unique
+          - not_null
+      - name: price_kes
+        data_tests:
+          - not_null
+
+  - name: stg_weather
+    description: "Daily agro-meteorological metrics per Kenyan county."
+    columns:
+      - name: weather_id
+        description: "Surrogate key generated from weather_date and county."
+        data_tests:
+          - unique
+          - not_null
+      - name: county
+        data_tests:
+          - not_null
+      - name: weather_date
+        data_tests:
+          - not_null
