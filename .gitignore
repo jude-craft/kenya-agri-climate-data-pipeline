@@ -5,8 +5,7 @@
 *.key
 
 # Data & Extraction Outputs
-*.csv
-*.csv#
+extract/consumer_market_extract.csv
 
 # Python environment & cache
 __pycache__/
