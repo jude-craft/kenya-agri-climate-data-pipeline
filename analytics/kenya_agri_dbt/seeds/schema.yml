@@ -1,0 +1,26 @@
+version: 2
+
+seeds:
+  - name: trade_routes
+    description: "Business logic mapping consumer markets to their primary producer agricultural hubs."
+    
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - consumer_county
+              - commodity
+
+    columns:
+      - name: consumer_county
+        description: "The destination market county."
+        data_tests:
+          - not_null
+      - name: commodity
+        description: "The specific crop."
+        data_tests:
+          - not_null
+      - name: primary_producer_county
+        description: "The source agricultural county."
+        data_tests:
+          - not_null
