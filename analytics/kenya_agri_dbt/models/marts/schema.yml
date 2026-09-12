@@ -2,20 +2,26 @@ version: 2
 
 models:
   - name: fct_climate_market_impact
-    description: "Final analytical table combining market prices with rolling climate stress indicators."
+    description: "Evaluates producer county climate metrics against consumer market commodity prices using established trade routes."
     columns:
-      - name: market_id
-        description: "Primary key for the fact table."
+      - name: impact_id
+        description: "Primary key for the fact table. Unique combination of a specific market price record and the corresponding producer's weather."
         data_tests:
           - unique
           - not_null
-      - name: county
-        description: "The Kenyan county where the market is located."
       - name: price_date
         description: "The date the commodity price was recorded."
+      - name: consumer_county
+        description: "The county where the commodity was sold."
+        data_tests:
+          - not_null
+      - name: producer_county
+        description: "The county where the commodity was grown, mapped via trade routes."
+        data_tests:
+          - not_null
       - name: price_kes
         description: "Price in Kenyan Shillings."
         data_tests:
           - not_null
-      - name: temp_mean_c_7d_avg
-        description: "7-day rolling average temperature preceding the price date."
+      - name: producer_rainfall_mm_30d_sum
+        description: "30-day cumulative rainfall in the producer county."
