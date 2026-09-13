@@ -91,7 +91,7 @@ This project sits at layer **4** of the full pipeline:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 kenya_agri_dbt/
