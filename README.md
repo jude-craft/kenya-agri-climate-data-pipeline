@@ -1,6 +1,19 @@
 # Kenya Agri-Market & Climate Impact Pipeline
 
-> An end-to-end batch data engineering pipeline I built to analyze the relationship between climate variability and agricultural commodity prices across Kenya.
+
+<img src="assets/project_overview.png" alt="Pipeline Overview" width="700"/>
+
+> **An end-to-end batch data engineering pipeline that analyzes the relationship between climate variability and agricultural commodity prices across Kenya.**
+>
+> *Climate Data + Market Prices → Analytics-Ready Insights*
+
+![Pipeline Status](https://img.shields.io/badge/Pipeline-Active-brightgreen?style=flat-square)
+![dbt](https://img.shields.io/badge/dbt-In%20Progress-orange?style=flat-square&logo=dbt)
+![GCP](https://img.shields.io/badge/GCP-BigQuery%20%7C%20GCS-blue?style=flat-square&logo=google-cloud)
+![Kestra](https://img.shields.io/badge/Orchestration-Kestra-purple?style=flat-square)
+![IaC](https://img.shields.io/badge/IaC-Terraform-7B42BC?style=flat-square&logo=terraform)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python)
+![License](https://img.shields.io/badge/License-Educational-lightgrey?style=flat-square)
 
 ---
 
@@ -31,18 +44,21 @@
   - [5. Deploy the Pipeline Flow to Kestra](#5-deploy-the-pipeline-flow-to-kestra)
 - [Lessons Learned & Engineering Notes](#lessons-learned--engineering-notes)
 - [Future Work](#future-work)
+- [License](#license)
 
 ---
 
 ## Problem Statement
 
-Agriculture is the backbone of Kenya's economy — it employs over 70% of the rural population and directly influences the country's GDP(Gross Domestic Product), food security, and regional stability. Yet, it is one of the sectors most vulnerable to extreme climate events. A single prolonged drought in the Rift Valley can cascade into supply shortages in Nairobi markets within weeks, driving food inflation that hits the lowest-income households the hardest.
+Agriculture is the backbone of Kenya's economy — it employs over 70% of the rural population and directly influences the country's GDP (Gross Domestic Product), food security, and regional stability. Yet, it is one of the sectors most vulnerable to extreme climate events. A single prolonged drought in the Rift Valley can cascade into supply shortages in Nairobi markets within weeks, driving food inflation that hits the lowest-income households the hardest.
 
 Despite this, the relationship between **climate patterns** (rainfall, temperature, evapotranspiration) and **commodity price fluctuations** remains poorly quantified at scale. The data exists — scattered across weather APIs and humanitarian datasets — but no unified, analytics-ready pipeline connects these two domains for Kenya.
 
+---
+
 ## Objective
 
-I designed this pipeline to solve that gap. Specifically, it:
+This pipeline is designed to close that gap. Specifically, it:
 
 1. **Extracts** 20+ years of daily historical weather data for Kenya's key **producer counties** (the agricultural heartland where food is grown).
 2. **Extracts** monthly staple commodity price records for key **consumer hubs** (the urban markets where food is sold and consumed).
@@ -58,6 +74,24 @@ The end goal is a structured data warehouse that analysts and data scientists ca
 ---
 
 ## Architecture Overview
+
+The diagram below illustrates the full end-to-end pipeline — from raw data sources to analytics-ready outputs — along with the supporting infrastructure layer.
+
+![Kenya Agri-Market & Climate Impact Pipeline — Architecture Overview](assets/project_overview.png)
+
+**Pipeline Stages at a Glance:**
+
+| Stage | Tool / Service | Output |
+|---|---|---|
+| **Orchestration** | Kestra (Daily @ 02:00 EAT) | Scheduled DAG execution |
+| **Data Extraction** | Python 3.11 in ephemeral Docker containers | Raw CSV files |
+| **Data Lake** | Google Cloud Storage (GCS) | Immutable raw backup |
+| **Data Warehouse** | Google BigQuery (Bronze layer) | Native columnar tables |
+| **Transformations** | dbt *(In Progress)* | Star Schema models |
+| **Analytics Ready** | Looker Studio / Metabase *(Planned)* | BI dashboards |
+| **Infrastructure** | Terraform | GCS bucket + BigQuery dataset |
+| **Containerization** | Docker Compose | Kestra + PostgreSQL metadata store |
+| **CI/CD** | GitHub Actions *(Planned)* | Linting, plan validation, testing |
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
@@ -101,16 +135,17 @@ The end goal is a structured data warehouse that analysts and data scientists ca
 
 ## Tech Stack
 
-| Layer                | Technology                  | Purpose                                                                 |
-|----------------------|-----------------------------|-------------------------------------------------------------------------|
-| **Infrastructure**   | Terraform                   | IaC — provisions the GCS bucket and BigQuery dataset declaratively      |
-| **Orchestration**    | Kestra (Dockerized)         | Workflow scheduling, task execution, and pipeline DAG management        |
-| **Containerization** | Docker / Docker Compose     | Kestra server, PostgreSQL metadata backend, and ephemeral task runners  |
-| **Extraction**       | Python 3.11                 | Data pull scripts running inside ephemeral Docker containers            |
-| **Data Lake**        | Google Cloud Storage (GCS)  | Raw CSV landing zone — immutable backup layer                           |
-| **Data Warehouse**   | Google BigQuery             | Native Bronze layer tables — columnar storage, partition-ready          |
-| **Transformations**  | dbt (Data Build Tool)       | SQL-based modeling into Star Schema *(In Progress)*                     |
-| **Data Sources**     | Open-Meteo API, WFP / HDX   | Historical climate data and agricultural commodity prices               |
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Infrastructure** | Terraform | IaC — provisions the GCS bucket and BigQuery dataset declaratively |
+| **Orchestration** | Kestra (Dockerized) | Workflow scheduling, task execution, and pipeline DAG management |
+| **Containerization** | Docker / Docker Compose | Kestra server, PostgreSQL metadata backend, and ephemeral task runners |
+| **Extraction** | Python 3.11 | Data pull scripts running inside ephemeral Docker containers |
+| **Data Lake** | Google Cloud Storage (GCS) | Raw CSV landing zone — immutable backup layer |
+| **Data Warehouse** | Google BigQuery | Native Bronze layer tables — columnar storage, partition-ready |
+| **Transformations** | dbt (Data Build Tool) | SQL-based modeling into Star Schema *(In Progress)* |
+| **Data Sources** | Open-Meteo API, WFP / HDX | Historical climate data and agricultural commodity prices |
+| **CI/CD** | GitHub Actions | Linting, Terraform plan validation, dbt model testing *(Planned)* |
 
 ---
 
@@ -121,6 +156,7 @@ kenya-agri-climate-data-pipeline/
 │
 ├── README.md                          # This document — master project documentation
 ├── .env                               # Environment variables for Docker Compose (gitignored)
+├── .env.example                       # Template for required environment variables
 ├── .gitignore                         # Security & hygiene rules for version control
 │
 ├── main.tf                            # Terraform — GCS bucket + BigQuery dataset provisioning
@@ -128,12 +164,15 @@ kenya-agri-climate-data-pipeline/
 │
 ├── docker-compose.yml                 # Kestra server + PostgreSQL metadata store
 │
+├── assets/                            # Project documentation assets
+│   └── project_overview.png           # End-to-end architecture diagram
+│
 ├── credentials/                       # GCP service account key (gitignored)
 │   └── gcp-service-account.json
 │
 ├── extract/                           # Python extraction scripts
 │   ├── weather_extract.py             # Open-Meteo API → daily weather for producer counties
-│   └── market_extract.py              # WFP/HDX dataset → commodity prices for consumer hubs
+│   └── market_extract.py             # WFP/HDX dataset → commodity prices for consumer hubs
 │
 ├── orchestration/                     # Kestra workflow definitions
 │   └── main_pipeline.yml              # Full EL pipeline — extract, upload to GCS, load to BQ
@@ -152,19 +191,30 @@ kenya-agri-climate-data-pipeline/
 
 ### Phase 1 — Extract
 
-I use two purpose-built Python scripts, each designed to pull data from a distinct source domain. Kestra spawns each script inside an **ephemeral `python:3.11-slim` Docker container** — this guarantees a clean, reproducible execution environment on every run with zero dependency leakage onto the host.
+Two purpose-built Python scripts handle data extraction, each designed for a distinct source domain. Kestra spawns each script inside an **ephemeral `python:3.11-slim` Docker container** — this guarantees a clean, reproducible execution environment on every run with zero dependency leakage onto the host.
 
 #### `weather_extract.py` — Climate Data
 
-- **Source:** [Open-Meteo Historical Weather API](https://open-meteo.com/)
+- **Source:** [Open-Meteo Historical Weather API](https://open-meteo.com/) — free, no API key required
 - **Scope:** 3 producer counties in Kenya's agricultural heartland:
-  | County        | Latitude | Longitude | Significance                    |
-  |---------------|----------|-----------|----------------------------------|
-  | Trans Nzoia   | 1.0507   | 34.9570   | Kenya's breadbasket (maize belt) |
-  | Uasin Gishu   | 0.5527   | 35.3027   | Major wheat & maize producer     |
-  | Nakuru         | -0.3071  | 36.0722   | Key horticultural county         |
 
-- **Extracted Variables:** `temperature_2m_max`, `temperature_2m_min`, `precipitation_sum`, `wind_speed_10m_max`, `shortwave_radiation_sum`, `et0_fao_evapotranspiration`
+  | County | Latitude | Longitude | Significance |
+  |---|---|---|---|
+  | Trans Nzoia | 1.0507 | 34.9570 | Kenya's breadbasket (maize belt) |
+  | Uasin Gishu | 0.5527 | 35.3027 | Major wheat & maize producer |
+  | Nakuru | -0.3071 | 36.0722 | Key horticultural county |
+
+- **Extracted Variables:**
+
+  | Variable | Description |
+  |---|---|
+  | `temperature_2m_max` | Daily maximum temperature at 2m height (°C) |
+  | `temperature_2m_min` | Daily minimum temperature at 2m height (°C) |
+  | `precipitation_sum` | Total daily precipitation (mm) |
+  | `wind_speed_10m_max` | Maximum wind speed at 10m height (km/h) |
+  | `shortwave_radiation_sum` | Total incoming solar radiation (MJ/m²) |
+  | `et0_fao_evapotranspiration` | FAO-56 reference evapotranspiration (mm) |
+
 - **Granularity:** Daily records, timezone-aware (`Africa/Nairobi`)
 - **Date Range:** Controlled by `START_DATE` and `END_DATE` environment variables — supports both historical backfill (20+ years) and daily incremental runs.
 - **Output:** `producer_weather_extract.csv`
@@ -173,14 +223,15 @@ I use two purpose-built Python scripts, each designed to pull data from a distin
 
 - **Source:** [World Food Programme (WFP) Kenya Food Prices](https://data.humdata.org/) via the Humanitarian Data Exchange (HDX)
 - **Scope:** 3 consumer hub counties (major urban markets):
-  | County    | Significance                            |
-  |-----------|-----------------------------------------|
-  | Nairobi   | Capital city — largest consumer market   |
-  | Mombasa   | Coastal hub — import/export gateway      |
-  | Turkana   | Arid/semi-arid — food insecurity hotspot |
+
+  | County | Significance |
+  |---|---|
+  | Nairobi | Capital city — largest consumer market |
+  | Mombasa | Coastal hub — import/export gateway |
+  | Turkana | Arid/semi-arid — food insecurity hotspot |
 
 - **Extracted Fields:** `date`, `county` (admin2), `market`, `commodity`, `unit`, `price_kes`
-- **Filtering Logic:** The full WFP dataset covers all of Kenya. I filter server-side to extract only the rows matching my target consumer hubs, dramatically reducing the data volume stored downstream.
+- **Filtering Logic:** The full WFP dataset covers all of Kenya. The script filters server-side to extract only rows matching the target consumer hubs, dramatically reducing downstream data volume.
 - **Schema Guard:** The script validates expected column headers on every run and raises a `ValueError` if the upstream schema changes — an early-warning mechanism against silent data corruption.
 - **Output:** `consumer_market_extract.csv`
 
@@ -188,7 +239,7 @@ I use two purpose-built Python scripts, each designed to pull data from a distin
 
 ### Phase 2 — Load to Data Lake (GCS)
 
-After extraction, Kestra uploads both CSV files to Google Cloud Storage using the `io.kestra.plugin.gcp.gcs.Upload` plugin. The files are organized with dynamic, date-stamped object paths:
+After extraction, Kestra uploads both CSV files to Google Cloud Storage using the `io.kestra.plugin.gcp.gcs.Upload` plugin. Files are organized with dynamic, date-stamped object paths:
 
 ```
 gs://kenya-agri-climate-lake-bucket/
@@ -199,8 +250,9 @@ gs://kenya-agri-climate-lake-bucket/
 ```
 
 **Why GCS as a landing zone?**
-- It serves as an **immutable physical backup** of every extraction run. If I ever need to replay or audit a specific day's data pull, the raw artifacts are always there.
-- It **decouples extraction from warehousing** — if the BigQuery load step fails, I don't lose the extracted data and can retry without re-hitting the APIs.
+
+- It serves as an **immutable physical backup** of every extraction run. If a specific day's data pull needs to be audited or replayed, the raw artifacts are always available.
+- It **decouples extraction from warehousing** — if the BigQuery load step fails, the extracted data is not lost and can be retried without re-hitting the source APIs.
 
 ---
 
@@ -208,12 +260,12 @@ gs://kenya-agri-climate-lake-bucket/
 
 Once the CSVs land in GCS, Kestra triggers a `io.kestra.plugin.gcp.bigquery.Load` task to physically ingest the data into native BigQuery tables using `WRITE_APPEND`. This is the **Bronze layer** — raw, untransformed data stored in BigQuery's native columnar format (Capacitor).
 
-| BigQuery Table                               | Source                    | Write Mode     |
-|----------------------------------------------|---------------------------|----------------|
-| `kenya_agri_market.raw_weather`              | `raw_weather/*.csv`        | `WRITE_APPEND` |
-| `kenya_agri_market.raw_market`               | `raw_market/*.csv`         | `WRITE_APPEND` |
+| BigQuery Table | Source | Write Mode |
+|---|---|---|
+| `kenya_agri_market.raw_weather` | `raw_weather/*.csv` | `WRITE_APPEND` |
+| `kenya_agri_market.raw_market` | `raw_market/*.csv` | `WRITE_APPEND` |
 
-**Historical Backfill:** For the initial 20-year historical load, I ran a one-time SQL script ([`init_bronze.sql`](warehouse/scripts/init_bronze.sql)) that dropped any legacy external tables and bulk-loaded all historical CSVs from GCS into native tables using `LOAD DATA OVERWRITE`. From that point forward, daily incremental appends are handled automatically by Kestra.
+**Historical Backfill:** For the initial 20-year historical load, a one-time SQL script ([`init_bronze.sql`](warehouse/scripts/init_bronze.sql)) was run. It dropped any legacy external tables and bulk-loaded all historical CSVs from GCS into native tables using `LOAD DATA OVERWRITE`. From that point forward, daily incremental appends are handled automatically by Kestra.
 
 ---
 
@@ -221,12 +273,24 @@ Once the CSVs land in GCS, Kestra triggers a `io.kestra.plugin.gcp.bigquery.Load
 
 > 🚧 **Status: In Progress**
 
-I am building a dbt project that connects to the BigQuery Bronze layer and models the raw data into a **Star Schema** optimized for analytical queries:
+A dbt project is being built that connects to the BigQuery Bronze layer and models the raw data into a **Star Schema** optimized for analytical queries:
 
 - **Fact Tables:** Climate observations joined with market prices along shared dimensions (county, date).
 - **Dimension Tables:** Counties (with metadata like region, type: producer/consumer), commodities, time dimensions.
 
 This will enable downstream BI tools (Looker Studio, Metabase, etc.) to run performant, slice-and-dice analytics without touching the raw Bronze data.
+
+**Planned dbt model layers:**
+
+```
+bronze/          → Raw source references (no transformation)
+staging/         → Cleaned, typed, and renamed columns
+marts/
+  ├── dim_county.sql           → County dimension (producer vs consumer)
+  ├── dim_commodity.sql        → Commodity dimension with categories
+  ├── dim_date.sql             → Date spine for time-series analysis
+  └── fct_climate_market.sql   → Core fact table joining climate & prices
+```
 
 ---
 
@@ -234,53 +298,63 @@ This will enable downstream BI tools (Looker Studio, Metabase, etc.) to run perf
 
 ### Weather Data (Producer Hubs)
 
-| Column                     | Type    | Description                                               |
-|----------------------------|---------|-----------------------------------------------------------|
-| `county`                   | STRING  | Producer county name (join key to dimension tables)       |
-| `date`                     | DATE    | Observation date (`Africa/Nairobi` timezone)              |
-| `temp_max_c`               | FLOAT   | Maximum temperature at 2m height (°C)                     |
-| `temp_min_c`               | FLOAT   | Minimum temperature at 2m height (°C)                     |
-| `precipitation_mm`         | FLOAT   | Total daily precipitation (mm)                            |
-| `wind_speed_max_kmh`       | FLOAT   | Maximum wind speed at 10m height (km/h)                   |
-| `solar_radiation_mj_m2`    | FLOAT   | Total shortwave radiation (MJ/m²)                         |
-| `evapotranspiration_mm`    | FLOAT   | FAO-56 reference evapotranspiration (mm)                  |
+**Source:** [Open-Meteo Historical Weather API](https://open-meteo.com/)  
+**Update Frequency:** Daily  
+**Coverage:** 2005-01-01 to present
+
+| Column | Type | Description |
+|---|---|---|
+| `county` | STRING | Producer county name (join key to dimension tables) |
+| `date` | DATE | Observation date (`Africa/Nairobi` timezone) |
+| `temp_max_c` | FLOAT | Maximum temperature at 2m height (°C) |
+| `temp_min_c` | FLOAT | Minimum temperature at 2m height (°C) |
+| `precipitation_mm` | FLOAT | Total daily precipitation (mm) |
+| `wind_speed_max_kmh` | FLOAT | Maximum wind speed at 10m height (km/h) |
+| `solar_radiation_mj_m2` | FLOAT | Total shortwave radiation (MJ/m²) |
+| `evapotranspiration_mm` | FLOAT | FAO-56 reference evapotranspiration (mm) |
 
 ### Market Data (Consumer Hubs)
 
-| Column         | Type    | Description                                         |
-|----------------|---------|-----------------------------------------------------|
-| `date`         | DATE    | Price observation date                              |
-| `county`       | STRING  | Consumer hub county (join key to dimension tables)  |
-| `market`       | STRING  | Specific market name within the county              |
-| `commodity`    | STRING  | Agricultural commodity (e.g., Maize, Beans, Rice)   |
-| `unit`         | STRING  | Unit of measurement (e.g., KG, 90 KG bag)           |
-| `price_kes`    | FLOAT   | Price in Kenyan Shillings (KES)                     |
+**Source:** [WFP Kenya Food Prices via HDX](https://data.humdata.org/)  
+**Update Frequency:** Monthly  
+**Coverage:** Historical records available from ~2006
+
+| Column | Type | Description |
+|---|---|---|
+| `date` | DATE | Price observation date |
+| `county` | STRING | Consumer hub county (join key to dimension tables) |
+| `market` | STRING | Specific market name within the county |
+| `commodity` | STRING | Agricultural commodity (e.g., Maize, Beans, Rice) |
+| `unit` | STRING | Unit of measurement (e.g., KG, 90 KG bag) |
+| `price_kes` | FLOAT | Price in Kenyan Shillings (KES) |
+
+**Tracked Commodities include:** Maize, Wheat Flour, Rice, Beans, Sorghum, Millet, Sugar, Cooking Oil, and other staple foodstuffs.
 
 ---
 
 ## Infrastructure as Code (Terraform)
 
-I use Terraform to declaratively provision all GCP resources. This ensures the infrastructure is reproducible, version-controlled, and can be torn down cleanly.
+Terraform is used to declaratively provision all GCP resources. This ensures the infrastructure is reproducible, version-controlled, and can be torn down cleanly.
 
 **Resources provisioned by [`main.tf`](main.tf):**
 
-| Resource                        | Terraform Resource Type          | Name / ID                              |
-|---------------------------------|----------------------------------|----------------------------------------|
-| Data Lake (GCS Bucket)          | `google_storage_bucket`          | `kenya-agri-climate-lake-bucket`       |
-| Data Warehouse (BigQuery)       | `google_bigquery_dataset`        | `kenya_agri_market`                    |
+| Resource | Terraform Resource Type | Name / ID |
+|---|---|---|
+| Data Lake (GCS Bucket) | `google_storage_bucket` | `kenya-agri-climate-lake-bucket` |
+| Data Warehouse (BigQuery) | `google_bigquery_dataset` | `kenya_agri_market` |
 
 **Key configuration in [`variable.tf`](variable.tf):**
 
-| Variable            | Default Value                              | Description                          |
-|---------------------|--------------------------------------------|--------------------------------------|
-| `credentials`       | `./credentials/gcp-service-account.json`   | Path to GCP service account key      |
-| `project`           | `kestra-sandbox-504410`                    | GCP project ID                       |
-| `region`            | `europe-west1`                             | GCP region                           |
-| `location`          | `EU`                                       | Multi-region location for GCS/BQ     |
-| `bq_dataset_name`   | `kenya_agri_market`                        | BigQuery dataset name                |
-| `gcs_bucket_name`   | `kenya-agri-climate-lake-bucket`           | GCS bucket name                      |
+| Variable | Default Value | Description |
+|---|---|---|
+| `credentials` | `./credentials/gcp-service-account.json` | Path to GCP service account key |
+| `project` | `kestra-sandbox-504410` | GCP project ID |
+| `region` | `europe-west1` | GCP region for resources |
+| `location` | `EU` | Multi-region location for GCS/BQ |
+| `bq_dataset_name` | `kenya_agri_market` | BigQuery dataset name |
+| `gcs_bucket_name` | `kenya-agri-climate-lake-bucket` | GCS bucket name |
 
-**GCS Lifecycle Rule:** I configured an `AbortIncompleteMultipartUpload` rule with a 1-day age to automatically clean up any failed or partial uploads — a small but important hygiene measure for production buckets.
+**GCS Lifecycle Rule:** An `AbortIncompleteMultipartUpload` rule with a 1-day age is configured to automatically clean up any failed or partial uploads — a small but important hygiene measure for production buckets.
 
 ---
 
@@ -290,29 +364,37 @@ I use Terraform to declaratively provision all GCP resources. This ensures the i
 
 The orchestration layer is fully containerized via [`docker-compose.yml`](docker-compose.yml):
 
-| Service       | Image                   | Purpose                                            |
-|---------------|-------------------------|-----------------------------------------------------|
-| `postgres`    | `postgres:15`           | Kestra's metadata store (flow state, logs, history) |
-| `kestra`      | `kestra/kestra:latest`  | Orchestration server (standalone mode)              |
+| Service | Image | Port | Purpose |
+|---|---|---|---|
+| `postgres` | `postgres:15` | `5433` (host) | Kestra's metadata store (flow state, logs, history) |
+| `kestra` | `kestra/kestra:latest` | `8080` (host) | Orchestration server (standalone mode) |
 
 **Critical Design Decisions:**
 
-- **`network_mode: host`**: I run Kestra with `networkMode: host` rather than the default Docker bridge network. This was a deliberate decision to **bypass firewall restrictions** in my development environment. When Kestra spawns ephemeral Docker containers for Python tasks, those child containers need to reach the internet (to call the Open-Meteo API and download the HDX dataset). On a bridge network behind certain firewalls, this outbound traffic is silently blocked. Switching to host networking resolved this entirely.
+- **`network_mode: host`**: Kestra runs with `networkMode: host` rather than the default Docker bridge network. This was a deliberate decision to **bypass firewall restrictions** in the development environment. When Kestra spawns ephemeral Docker containers for Python tasks, those child containers need to reach the internet (to call the Open-Meteo API and download the HDX dataset). On a bridge network behind certain firewalls, this outbound traffic is silently blocked. Switching to host networking resolved this entirely. *(See [ADR-002](#adr-002-kestra-networkmode-host--firewall-bypass-for-ephemeral-containers) for full analysis.)*
 
 - **Docker Socket Mounting**: The Docker socket (`/var/run/docker.sock`) is mounted into the Kestra container so that Kestra can spawn sibling containers (the `python:3.11-slim` task runners) on the host's Docker daemon. This is the Docker-in-Docker (DinD) pattern — ephemeral, stateless task execution.
 
 - **Credentials Volume**: The GCP service account key is mounted read-only (`ro`) at `/app/credentials/` inside the Kestra container. The `GOOGLE_APPLICATION_CREDENTIALS` environment variable points Kestra's GCP plugins to this file.
 
-- **PostgreSQL Backend**: Kestra uses PostgreSQL (not its default H2 in-memory DB) for persistent metadata — this ensures flow execution history, logs, and state survive container restarts. I map PostgreSQL to port `5433` on the host to avoid conflicts with any local PostgreSQL instance on the default `5432`.
+- **PostgreSQL Backend**: Kestra uses PostgreSQL (not the default H2 in-memory DB) for persistent metadata — this ensures flow execution history, logs, and state survive container restarts. PostgreSQL is mapped to port `5433` on the host to avoid conflicts with any local PostgreSQL instance on the default `5432`.
 
 ### Pipeline Flow Definition
 
 The pipeline is defined in [`main_pipeline.yml`](orchestration/main_pipeline.yml):
 
-- **Namespace:** `dev.data_engineering`
-- **Flow ID:** `kenya_agri_climate_pipeline`
-- **Trigger:** Daily CRON schedule at `02:00 AM EAT` (`0 2 * * *`)
-- **Inputs:** Optional `start_date` and `end_date` (STRING, format `YYYY-MM-DD`). If not provided (i.e., triggered by the daily schedule), both default to **yesterday's date** using Kestra's Pebble templating engine.
+| Property | Value |
+|---|---|
+| **Namespace** | `dev.data_engineering` |
+| **Flow ID** | `kenya_agri_climate_pipeline` |
+| **Trigger** | Daily CRON at `02:00 AM EAT` (`0 2 * * *`) |
+| **Inputs** | Optional `start_date` and `end_date` (STRING, format `YYYY-MM-DD`) |
+
+**Default date behavior:** If `start_date` / `end_date` are not provided (i.e., triggered by the daily schedule), both default to **yesterday's date** using Kestra's Pebble templating engine:
+
+```
+{{ execution.startDate | dateAdd(-1, 'DAYS') | date('yyyy-MM-dd') }}
+```
 
 **Task Execution Order (Sequential):**
 
@@ -331,22 +413,26 @@ The pipeline is defined in [`main_pipeline.yml`](orchestration/main_pipeline.yml
 
 ### ADR-001: Bronze Layer Storage — Native BigQuery Tables vs. External Tables
 
+**Status:** ✅ Decided — Native BigQuery Tables
+
 **Context:**
-After establishing GCS as my raw data lake, I needed to expose this data to the data warehouse (BigQuery) for dbt transformations. I had to decide between two approaches.
+After establishing GCS as the raw data lake, the data needed to be exposed to BigQuery for dbt transformations. The decision was between using External Tables (pointed at GCS) or loading data into native BigQuery tables.
 
 **Considered Alternative — External Tables:**
-I initially considered using BigQuery External Tables pointed directly at `gs://kenya-agri-climate-lake-bucket/raw_*/*.csv`. This would have avoided data duplication and kept GCS as the single source of truth.
+BigQuery External Tables pointed directly at `gs://kenya-agri-climate-lake-bucket/raw_*/*.csv`. This would have avoided data duplication and kept GCS as the single source of truth.
 
 **Trade-off Analysis:**
-While External Tables eliminate data duplication, they introduce a **brittle dependency on the GCS object lifecycle**. Any accidental file deletion, rename, or modification in the bucket would instantly break downstream dbt models — silently. Furthermore, external tables do **not** support:
-- Native partitioning or clustering
-- BigQuery's internal columnar compression (Capacitor format)
-- Efficient partition pruning for time-range queries
 
-This results in **poor query performance at scale**, as every query must scan the full CSV file set in GCS.
+| Factor | External Tables | Native BigQuery Tables |
+|---|---|---|
+| Data duplication | ❌ None | ✅ Minimal (CSV + BQ) |
+| Query performance | ❌ Poor (full CSV scan) | ✅ Columnar Capacitor format |
+| Partition pruning | ❌ Not supported | ✅ Supported |
+| Resilience | ❌ Fragile (GCS-coupled) | ✅ Decoupled from GCS |
+| Downstream dbt stability | ❌ Brittle | ✅ Stable native tables |
 
 **Final Decision:**
-I implemented a **Native Bronze Layer**. GCS serves strictly as a transient landing zone and immutable backup. Kestra orchestrates the physical ingestion of CSVs into native BigQuery tables using `WRITE_APPEND`. This decoupling guarantees:
+A **Native Bronze Layer** was implemented. GCS serves strictly as a transient landing zone and immutable backup. Kestra orchestrates the physical ingestion of CSVs into native BigQuery tables using `WRITE_APPEND`. This guarantees:
 - ✅ High query performance via columnar storage
 - ✅ Future partition pruning on date columns
 - ✅ Isolated, resilient downstream transformations (dbt reads from stable native tables, not volatile object stores)
@@ -356,17 +442,26 @@ I implemented a **Native Bronze Layer**. GCS serves strictly as a transient land
 
 ### ADR-002: Kestra `networkMode: host` — Firewall Bypass for Ephemeral Containers
 
+**Status:** ✅ Decided — Host Networking (dev environment)
+
 **Context:**
-During development, I discovered that ephemeral Docker containers spawned by Kestra (for Python extraction tasks) were silently failing to make outbound HTTP requests to the Open-Meteo API and HDX.
+During development, ephemeral Docker containers spawned by Kestra (for Python extraction tasks) were silently failing to make outbound HTTP requests to the Open-Meteo API and HDX.
 
 **Root Cause:**
 The default Docker bridge network was being blocked by the host machine's firewall rules. The containers could resolve DNS but could not establish TCP connections to external endpoints.
 
 **Decision:**
-I configured Kestra's Docker task runner to use `networkMode: host`, which gives the ephemeral containers direct access to the host's network stack, bypassing the bridge network entirely.
+Kestra's Docker task runner is configured to use `networkMode: host`, which gives the ephemeral containers direct access to the host's network stack, bypassing the bridge network entirely.
 
 **Trade-off:**
-This sacrifices network isolation between the container and the host. In a production environment, I would address this with proper firewall rules or a Docker network with explicit egress policies rather than blanket host networking. For this development/sandbox environment, the pragmatic trade-off is acceptable.
+
+| Aspect | Impact |
+|---|---|
+| Network isolation | ❌ Sacrificed between container and host |
+| Development velocity | ✅ Unblocked immediately |
+| Production readiness | ⚠️ Requires proper firewall egress policies in production |
+
+In a production environment, this should be addressed with proper firewall rules or a Docker network with explicit egress policies rather than blanket host networking. For this development/sandbox environment, the pragmatic trade-off is acceptable.
 
 ---
 
@@ -374,12 +469,24 @@ This sacrifices network isolation between the container and the host. In a produ
 
 ### Prerequisites
 
-- [Google Cloud Platform](https://cloud.google.com/) account with a project created
-- [Terraform](https://developer.hashicorp.com/terraform/downloads) (v1.0+)
-- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/) (v2+)
-- A GCP Service Account with the following roles:
-  - `roles/storage.admin` (GCS bucket management)
-  - `roles/bigquery.admin` (BigQuery dataset and table management)
+Ensure the following are installed and configured before proceeding:
+
+| Requirement | Version | Notes |
+|---|---|---|
+| [Google Cloud Platform](https://cloud.google.com/) account | — | With a project created |
+| [Terraform](https://developer.hashicorp.com/terraform/downloads) | v1.0+ | For infrastructure provisioning |
+| [Docker](https://docs.docker.com/get-docker/) | Latest | For containerized execution |
+| [Docker Compose](https://docs.docker.com/compose/install/) | v2+ | For the Kestra orchestration stack |
+| GCP Service Account | — | See required IAM roles below |
+
+**Required GCP IAM Roles for the Service Account:**
+
+| Role | Purpose |
+|---|---|
+| `roles/storage.admin` | GCS bucket creation and object management |
+| `roles/bigquery.admin` | BigQuery dataset and table creation |
+
+---
 
 ### 1. Clone the Repository
 
@@ -387,6 +494,8 @@ This sacrifices network isolation between the container and the host. In a produ
 git clone https://github.com/jude-craft/kenya-agri-climate-data-pipeline.git
 cd kenya-agri-climate-data-pipeline
 ```
+
+---
 
 ### 2. GCP Credentials Setup
 
@@ -396,10 +505,12 @@ Place your GCP service account JSON key at:
 credentials/gcp-service-account.json
 ```
 
+> ⚠️ **Security:** The `credentials/` directory is listed in `.gitignore`. Never commit service account keys to version control.
+
 Then create a `.env` file in the project root (use `.env.example` as a reference):
 
 ```env
-# Database credentials
+# PostgreSQL metadata store credentials
 POSTGRES_DB=kestra
 POSTGRES_USER=kestra
 POSTGRES_PASSWORD=<your-secure-password>
@@ -413,6 +524,8 @@ KESTRA_ADMIN_EMAIL=admin@admin.com
 KESTRA_ADMIN_PASSWORD=<your-secure-password>
 ```
 
+---
+
 ### 3. Provision Infrastructure with Terraform
 
 ```bash
@@ -421,9 +534,11 @@ terraform plan
 terraform apply
 ```
 
-This creates:
-- The GCS bucket (`kenya-agri-climate-lake-bucket`)
-- The BigQuery dataset (`kenya_agri_market`)
+This creates the following GCP resources:
+- ✅ GCS bucket: `kenya-agri-climate-lake-bucket`
+- ✅ BigQuery dataset: `kenya_agri_market`
+
+---
 
 ### 4. Start the Orchestration Stack
 
@@ -431,16 +546,37 @@ This creates:
 docker compose up -d
 ```
 
-Kestra UI will be available at **`http://localhost:8080`**. Log in with the credentials you set in `.env`.
+The Kestra UI will be available at **`http://localhost:8080`**. Log in with the credentials you set in `.env`.
+
+Verify both services are running:
+
+```bash
+docker compose ps
+```
+
+---
 
 ### 5. Deploy the Pipeline Flow to Kestra
 
-Upload the flow definition file (`orchestration/main_pipeline.yml`) via the Kestra UI or CLI. The flow will begin executing on its daily schedule, or you can trigger it manually with custom `start_date` and `end_date` inputs for historical backfill.
+Upload the flow definition file (`orchestration/main_pipeline.yml`) via the Kestra UI or CLI:
 
-**For a historical backfill** (e.g., 20 years of weather data):
+**Via the Kestra UI:**
+1. Open `http://localhost:8080`
+2. Navigate to **Flows → Create**
+3. Paste the contents of `orchestration/main_pipeline.yml`
+4. Save the flow
+
+**Via the Kestra CLI (if installed):**
+```bash
+kestra flow namespace update dev.data_engineering orchestration/main_pipeline.yml
+```
+
+The flow will begin executing on its daily schedule (02:00 EAT), or you can trigger it manually with custom `start_date` and `end_date` inputs for historical backfill.
+
+**For a historical backfill** (e.g., 20 years of weather + market data):
 1. Trigger the flow manually in the Kestra UI
 2. Provide inputs: `start_date = 2005-01-01`, `end_date = 2025-08-14`
-3. After the flow completes, run [`init_bronze.sql`](warehouse/scripts/init_bronze.sql) in the BigQuery console to transition from external tables to native Bronze tables
+3. After the flow completes, run [`init_bronze.sql`](warehouse/scripts/init_bronze.sql) in the BigQuery console to perform the bulk historical load into native Bronze tables
 
 ---
 
@@ -448,24 +584,26 @@ Upload the flow definition file (`orchestration/main_pipeline.yml`) via the Kest
 
 1. **Ephemeral Containers Are Worth the Overhead.** Running extraction scripts in throwaway Docker containers (vs. directly on the Kestra host) adds a few seconds of startup time per task. But the benefits — reproducibility, dependency isolation, and zero environment drift — are well worth it for a pipeline that needs to run reliably for months unattended.
 
-2. **GCS as a Backup, Not a Source of Truth.** I initially treated GCS as the source of truth via external tables. After experiencing the fragility firsthand (one misplaced `gsutil rm` could cascade into broken dbt models), I pivoted to native BigQuery tables and relegated GCS to a backup role. The slight data duplication is a small price for operational resilience.
+2. **GCS as a Backup, Not a Source of Truth.** GCS was initially treated as the source of truth via external tables. After experiencing the fragility firsthand (one misplaced `gsutil rm` could cascade into broken dbt models), the architecture pivoted to native BigQuery tables and relegated GCS to a backup role. The slight data duplication is a small price for operational resilience.
 
 3. **Kestra's Pebble Templating Is Powerful.** The ability to default `start_date` and `end_date` to yesterday's date using inline expressions (`{{ execution.startDate | dateAdd(-1, 'DAYS') | date('yyyy-MM-dd') }}`) means the same flow definition handles both daily incremental runs and ad-hoc historical backfills — no code changes needed.
 
-4. **Schema Validation at the Edge.** I built a defensive `try/except` block into `market_extract.py` that validates the HDX dataset's column headers on every run. Upstream humanitarian datasets change schema without warning. This early-warning mechanism ensures I catch breaking changes at extraction time, not days later when analysts see `NULL` columns in their dashboards.
+4. **Schema Validation at the Edge.** A defensive `try/except` block in `market_extract.py` validates the HDX dataset's column headers on every run. Upstream humanitarian datasets change schema without warning. This early-warning mechanism ensures breaking changes are caught at extraction time, not days later when analysts see `NULL` columns in their dashboards.
 
-5. **Firewall Awareness in Containerized Environments.** The `networkMode: host` lesson was hard-won. Kestra's task logs showed no obvious errors — the Python script simply timed out on `requests.get()`. It took debugging at the Docker network level to realize the bridge network was being firewalled. Always test outbound connectivity from your task containers independently.
+5. **Firewall Awareness in Containerized Environments.** The `networkMode: host` lesson was hard-won. Kestra's task logs showed no obvious errors — the Python script simply timed out on `requests.get()`. It took debugging at the Docker network level to identify that the bridge network was being firewalled. Always test outbound connectivity from your task containers independently before assuming application-level failures.
 
 ---
 
 ## Future Work
 
-- [ ] **dbt Transformations** — Complete the Star Schema modeling layer (fact tables, dimension tables, staging models)
-- [ ] **Data Quality & Testing** — Integrate dbt tests (`not_null`, `unique`, `accepted_values`) and freshness checks
-- [ ] **Dashboard / BI Layer** — Build a Looker Studio or Metabase dashboard visualizing climate-price correlations
-- [ ] **Partitioning & Clustering** — Apply BigQuery partitioning on `date` and clustering on `county` to optimize query performance at scale
-- [ ] **CI/CD** — GitHub Actions pipeline for linting, Terraform plan validation, and dbt model testing
-- [ ] **Alerting** — Kestra failure notifications via Slack or email for pipeline observability
+| Priority | Task | Status |
+|---|---|---|
+| 🔴 High | **dbt Transformations** — Complete the Star Schema modeling layer (fact tables, dimension tables, staging models) | 🚧 In Progress |
+| 🔴 High | **Data Quality & Testing** — Integrate dbt tests (`not_null`, `unique`, `accepted_values`) and freshness checks | ⏳ Planned |
+| 🟡 Medium | **Dashboard / BI Layer** — Build a Looker Studio or Metabase dashboard visualizing climate-price correlations | ⏳ Planned |
+| 🟡 Medium | **Partitioning & Clustering** — Apply BigQuery partitioning on `date` and clustering on `county` to optimize query performance at scale | ⏳ Planned |
+| 🟢 Low | **CI/CD** — GitHub Actions pipeline for linting, Terraform plan validation, and dbt model testing | ⏳ Planned |
+| 🟢 Low | **Alerting** — Kestra failure notifications via Slack or email for pipeline observability | ⏳ Planned |
 
 ---
 
@@ -475,4 +613,4 @@ This project is for educational and research purposes.
 
 ---
 
-*Built with ☕ and curiosity — analyzing how the sky affects the price of maize.*
+*Built with ☕ and curiosity — analyzing how the sky affects the price of produce.*
