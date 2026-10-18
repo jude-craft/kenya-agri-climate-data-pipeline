@@ -269,30 +269,33 @@ Once the CSVs land in GCS, Kestra triggers a `io.kestra.plugin.gcp.bigquery.Load
 
 ---
 
-### Phase 4 — Transform (dbt)
+### Data Transformation & Dimensional Modeling (Completed)
 
-> 🚧 **Status: In Progress**
+The dbt transformation layer was successfully implemented, connecting to the BigQuery Bronze layer to transform raw climate and market price data into an analytics-ready **Star Schema** optimized for downstream business intelligence and analytical queries.
 
-A dbt project is being built that connects to the BigQuery Bronze layer and models the raw data into a **Star Schema** optimized for analytical queries:
+**Implemented models:**
 
-- **Fact Tables:** Climate observations joined with market prices along shared dimensions (county, date).
-- **Dimension Tables:** Counties (with metadata like region, type: producer/consumer), commodities, time dimensions.
+- **Fact Table:** `fct_climate_market` — integrates climate observations and market prices using shared dimensions, including county and date, enabling cross-domain analytical queries.
+- **County Dimension:** `dim_county` — provides county-level metadata, including region and producer/consumer classification.
+- **Commodity Dimension:** `dim_commodity` — organizes commodities and their respective categories for market analysis.
+- **Date Dimension:** `dim_date` — provides a date dimension to support time-series analysis and temporal comparisons.
 
-This will enable downstream BI tools (Looker Studio, Metabase, etc.) to run performant, slice-and-dice analytics without touching the raw Bronze data.
+**dbt model architecture:**
 
-**Planned dbt model layers:**
-
-```
-bronze/          → Raw source references (no transformation)
-staging/         → Cleaned, typed, and renamed columns
+```text
+bronze/          → Raw source references
+staging/         → Cleaned, typed, and standardized data
 marts/
-  ├── dim_county.sql           → County dimension (producer vs consumer)
-  ├── dim_commodity.sql        → Commodity dimension with categories
-  ├── dim_date.sql             → Date spine for time-series analysis
-  └── fct_climate_market.sql   → Core fact table joining climate & prices
+  ├── dim_county.sql
+  ├── dim_commodity.sql
+  ├── dim_date.sql
+  └── fct_climate_market.sql
 ```
 
----
+The completed transformation layer separates raw data ingestion from analytical modeling, enabling BI tools such as **Looker Studio** and **Metabase** to query structured, analytics-ready datasets without directly processing the raw Bronze layer.
+
+This establishes a foundation for analyzing relationships between climate conditions and agricultural market prices across counties and over time.
+
 
 ## Data Sources & Schema
 
@@ -598,9 +601,6 @@ The flow will begin executing on its daily schedule (02:00 EAT), or you can trig
 
 | Priority | Task | Status |
 |---|---|---|
-| 🔴 High | **dbt Transformations** — Complete the Star Schema modeling layer (fact tables, dimension tables, staging models) | 🚧 In Progress |
-| 🔴 High | **Data Quality & Testing** — Integrate dbt tests (`not_null`, `unique`, `accepted_values`) and freshness checks | ⏳ Planned |
-| 🟡 Medium | **Dashboard / BI Layer** — Build a Looker Studio or Metabase dashboard visualizing climate-price correlations | ⏳ Planned |
 | 🟡 Medium | **Partitioning & Clustering** — Apply BigQuery partitioning on `date` and clustering on `county` to optimize query performance at scale | ⏳ Planned |
 | 🟢 Low | **CI/CD** — GitHub Actions pipeline for linting, Terraform plan validation, and dbt model testing | ⏳ Planned |
 | 🟢 Low | **Alerting** — Kestra failure notifications via Slack or email for pipeline observability | ⏳ Planned |
